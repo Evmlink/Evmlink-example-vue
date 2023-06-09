@@ -1,6 +1,7 @@
 <template>
-  <ConnectWallte/>
   <Home />
+  <ConnectWallte/>
+
 </template>
 <script>
 import ConnectWallte from './components/ConnectWallteExample.vue';

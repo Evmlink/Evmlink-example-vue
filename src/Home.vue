@@ -17,10 +17,6 @@
     </button>
 
 
-  <div>
-    <button @click="connectWallet" class="card"  style="cursor: pointer">Connect wallet</button>
-  </div>
-
     <div>
     <button @click="createLink" class="card"  style="cursor: pointer">Create a link no encrypthion</button>
          <div id="console" style="white-space: pre-line">
@@ -124,6 +120,10 @@ import { WalletConnectV1Adapter } from "@web3auth/wallet-connect-v1-adapter";
 import { MetamaskAdapter } from "@web3auth/metamask-adapter";
 import { TorusWalletAdapter } from "@web3auth/torus-evm-adapter";
 import Web3 from 'web3';
+
+//Web3modal
+
+
 declare var window: any
 export default {
   // eslint-disable-next-line vue/multi-word-component-names

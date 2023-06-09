@@ -91,6 +91,8 @@ export default function UseWallet() {
     walletObj.chainId = chainId;
     walletObj.networkId = networkId;
     await getAccountAssets();
+
+    return accounts[0];
   };
 
   return {
