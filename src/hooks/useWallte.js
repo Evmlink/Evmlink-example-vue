@@ -82,7 +82,7 @@ export default function UseWallet() {
 
     const networkId = await web3.eth.net.getId();
 
-    const chainId = await web3.eth.getChainId(); // 坑逼 注意版本 chainId
+    const chainId = await web3.eth.getChainId();
 
     walletObj.web3 = web3;
     walletObj.provider = provider;
