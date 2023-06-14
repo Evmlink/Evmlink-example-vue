@@ -225,7 +225,7 @@ export default {
 
 
     const createLink = async()=>{
-      EvmLink.create("/","http://192.168.1.103:8080/",false).then(evmlink => {
+      EvmLink.create("/","http://192.168.1.103:8080/",false,137,"Happy Birthday !").then(evmlink => {
         console.log("link: ", evmlink.url.toString());
         console.log("publicKey: ", evmlink.keypair.address);
         newLink.value = true;
@@ -240,7 +240,7 @@ export default {
     };
 
     const createLinkEncrypt = async()=>{
-      EvmLink.create("/","http://192.168.1.103:8080/",true).then(evmlink => {
+      EvmLink.create("/","http://192.168.1.103:8080/",true,137,"Happy Birthday !").then(evmlink => {
         console.log("link: ", evmlink.url.toString());
         console.log("publicKey: ", evmlink.keypair.address);
         newLink.value = true;
