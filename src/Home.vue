@@ -93,6 +93,11 @@
             Get Private Key
           </button>
         </div>
+                <div>
+          <button class="card" @click="getEvmWalletBalance" style="cursor: pointer">
+            Get Evm Wallet Balance
+          </button>
+        </div>
         <div>
           <button class="card" @click="logout" style="cursor: pointer">
             Logout
@@ -111,7 +116,7 @@ import { ref, onMounted } from "vue";
 import { Web3Auth } from "@web3auth/modal";
 import { CHAIN_NAMESPACES, SafeEventEmitterProvider } from "@web3auth/base";
 import RPC from "./web3RPC";
-import {EvmLink} from "@evmlink/api"
+import {EvmLink , EvmWallet} from "@evmlink/api"
 // Plugins
 import { TorusWalletConnectorPlugin } from "@web3auth/torus-wallet-connector-plugin";
 
@@ -425,6 +430,22 @@ export default {
         el.innerHTML = JSON.stringify(args || {}, null, 2);
       }
     };
+
+    const getEvmWalletBalance = async () => {
+      if (!provider) {
+        uiConsole("provider not initialized yet");
+        return;
+      }
+      const rpc = new RPC(provider);
+      const privateKey = await rpc.getPrivateKey();
+      const balance = await EvmWallet.getBalance(
+        privateKey,
+        "https://poly-rpc.gateway.pokt.network",
+        137
+      )
+      console.log(balance)
+      uiConsole(balance);
+    };
     return {
       newLink,
       loggedin,
@@ -447,7 +468,8 @@ export default {
       getPrivateKey,
       connectWallet,
       createLink,
-      createLinkEncrypt
+      createLinkEncrypt,
+      getEvmWalletBalance
     };
   },
 };
