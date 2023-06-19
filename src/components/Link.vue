@@ -7,15 +7,9 @@
       <div id="console" style="white-space: pre-line">
         <p style="white-space: pre-line"></p>
       </div>
-
-    <button
-      v-if="!loggedin"
-      class="card"
-      @click="login"
-      style="cursor: pointer"
-    >
-      Login web3auth
-    </button>
+      <div id="show" >
+       
+      </div>
 
     <div v-if="loggedin">
       <div class="flex-container">
@@ -28,8 +22,7 @@
           <button
             class="card"
             @click="authenticateUser"
-            style="cursor: pointer"
-          >
+            style="cursor: pointer">
             Get ID Token
           </button>
         </div>
@@ -91,7 +84,7 @@ import { ref, onMounted } from "vue";
 import { Web3Auth } from "@web3auth/modal";
 import { CHAIN_NAMESPACES, SafeEventEmitterProvider } from "@web3auth/base";
 import RPC from "../web3RPC";
-import {EvmLink} from "@evmlink/api"
+import {EvmLink , EvmWallet} from "@evmlink/api"
 // Plugins
 import { TorusWalletConnectorPlugin } from "@web3auth/torus-wallet-connector-plugin";
 
@@ -118,6 +111,7 @@ export default {
     }
   },
   setup() {
+    const axios = require('axios')
     const newLink = ref<boolean>(false);
     const loggedin = ref<boolean>(false);
     const loading = ref<boolean>(false);
@@ -206,7 +200,8 @@ export default {
 
     onMounted(async () => {
       try {
-        await    decodeUrl()
+        var _e = await  decodeUrl()
+        await getTokenListAmount(_e)
         loading.value = true;
         loggedin.value = false;
         await web3auth.initModal();
@@ -226,8 +221,8 @@ export default {
 
     const createLink = async()=>{
       EvmLink.create("/","http://192.168.1.103:8080/",false,137,"Happy Birthday !").then(evmlink => {
-        console.log("link: ", evmlink.url.toString());
-        console.log("publicKey: ", evmlink.keypair.address);
+        // console.log("link: ", evmlink.url.toString());
+        // console.log("publicKey: ", evmlink.keypair.address);
         newLink.value = true;
         uiConsole(
           {
@@ -241,8 +236,8 @@ export default {
 
     const createLinkEncrypt = async()=>{
       EvmLink.create("/","http://192.168.1.103:8080/",true,137,"Happy Birthday !").then(evmlink => {
-        console.log("link: ", evmlink.url.toString());
-        console.log("publicKey: ", evmlink.keypair.address);
+        // console.log("link: ", evmlink.url.toString());
+        // console.log("publicKey: ", evmlink.keypair.address);
         newLink.value = true;
         uiConsole(
           {
@@ -256,10 +251,11 @@ export default {
 
     const decodeUrl = async()=>{
       var evmlink = await EvmLink.fromUrl(window.location);
-      console.log(evmlink)
+      // console.log(evmlink)
       // document.getElementById('walletAddress').innerHTML=evmlink.address
       // document.getElementById('walletAddress').innerHTML = "hello";
       // console.log(document.getElementById('walletAddress'))
+      return evmlink;
       uiConsole(evmlink)
     };
 
@@ -405,6 +401,78 @@ export default {
         el.innerHTML = JSON.stringify(args || {}, null, 2);
       }
     };
+
+    function uiInform(symbol:any,amount:any): void {
+      const el = document.querySelector("#show");
+      if (el) {
+        el.innerHTML = '<p class="card"  style="cursor: pointer">'+symbol+' : '+amount+'</p>';
+      }
+    };
+
+    const getTokenListAmount = async (_e:EvmLink)=>{
+      // console.log(_e.keypair.privateKey)
+      const TOKEN_LISTS = {
+        eth:    'https://raw.githubusercontent.com/viaprotocol/tokenlists/main/tokenlists/ethereum.json',
+        avax:    'https://raw.githubusercontent.com/viaprotocol/tokenlists/main/tokenlists/avax.json',
+        bnb:    'https://raw.githubusercontent.com/viaprotocol/tokenlists/main/tokenlists/bsc.json',
+        matic:    'https://raw.githubusercontent.com/maticnetwork/polygon-token-list/dev/src/tokens/popularTokens.json',
+      }
+      const erc20abiReq = await axios.get("https://gist.githubusercontent.com/veox/8800debbf56e24718f9f483e1e40c35c/raw/f853187315486225002ba56e5283c1dba0556e6f/erc20.abi.json");
+      const erc20abi = erc20abiReq.data;
+      const tokenSource = TOKEN_LISTS["matic"]
+      const res = await axios.get(tokenSource)
+      var ret = await getAllTokenBalances(res.data,_e,erc20abi)
+      ret = JSON.parse(JSON.stringify(ret));
+      for(var i = 0 ; i < ret.length ; i ++)
+      {
+        //Search for the token list that i have 
+        if(Number(JSON.parse(JSON.stringify(ret[i].balance)).value)>0)
+        {
+            console.log(ret[i])
+            uiInform(
+              ret[i].symbol,
+              Number(JSON.parse(JSON.stringify(ret[i].balance)).value)
+            )
+        }
+      }
+      // console.log(ret)
+      return res.data
+    }
+
+
+    const getAllTokenBalances = async (tokenList:any, _e:any , erc20abi:any) => {
+      // array to store all balance requests
+      let proms = []
+      // array to store balances
+      let results = []
+      for (const ele of tokenList) {
+        proms.push(
+        EvmWallet.readContract(
+          _e.keypair.privateKey,
+          "https://poly-rpc.gateway.pokt.network",
+          _e.chainId,
+          {
+            abi:erc20abi,
+            address:ele.address,
+            functionName:"balanceOf",
+            method:[_e.keypair.address],
+            value:0
+          }
+        )
+        )
+      }
+      const promiseResults = await Promise.allSettled(proms)
+      for (let index = 0; index < promiseResults.length; index++) {
+        const bal = promiseResults[index];
+        results.push({
+          name: tokenList[index].name,
+          symbol: tokenList[index].symbol,
+          balance: bal,
+        })
+      }
+      return results
+}
+
     return {
       newLink,
       loggedin,
@@ -426,7 +494,8 @@ export default {
       signMessage,
       getPrivateKey,
       createLink,
-      createLinkEncrypt
+      createLinkEncrypt,
+      getTokenListAmount
     };
   },
 };
