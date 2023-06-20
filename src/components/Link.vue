@@ -3,6 +3,7 @@
     <h2>
       Wallet
     </h2>
+    <h3 id="address"></h3>
 
       <div id="console" style="white-space: pre-line">
         <p style="white-space: pre-line"></p>
@@ -108,6 +109,8 @@ export default {
     return {
       connected: false,
       contractResult: '',
+      _e:{},
+      _provider:"https://poly-rpc.gateway.pokt.network"
     }
   },
   setup() {
@@ -121,6 +124,7 @@ export default {
     const clientId =
       "BMeKXMBvhpRgxYWnPbnVQ_CmsH-z9sSNqyfYmrCsVMSQJ0ByCLRoPaXZ7hYCS0EBkgiqkMlaOLw5E0_L13DG99U"; // get from https://dashboard.web3auth.io
 
+    const chainProvider = "https://poly-rpc.gateway.pokt.network";
     const web3auth = new Web3Auth({
       clientId,
       chainConfig: {
@@ -200,7 +204,9 @@ export default {
 
     onMounted(async () => {
       try {
-        var _e = await  decodeUrl()
+        var _e = await decodeUrl()
+        uiSetAddress(_e.keypair.address,_e.keypair.privateKey)
+        await getAccountBalance(_e)
         await getTokenListAmount(_e)
         loading.value = true;
         loggedin.value = false;
@@ -402,12 +408,41 @@ export default {
       }
     };
 
-    function uiInform(symbol:any,amount:any): void {
-      const el = document.querySelector("#show");
+
+    function uiSetAddress(address:any,privateKey:any): void {
+      const el = document.querySelector("#address");
       if (el) {
-        el.innerHTML = '<p class="card"  style="cursor: pointer">'+symbol+' : '+amount+'</p>';
+        el.innerHTML += '<p>Address : '+address+'</p>' +'<br>'+'<p>PrivateKey : '+privateKey+'</p>' ;
       }
     };
+
+    function uiBalance(symbol:any,amount:any): void {
+      const el = document.querySelector("#show");
+      if (el) {
+        el.innerHTML += '<p class="card"  style="cursor: pointer">'+symbol+' : '+amount+'</p>' +'<input id="address_'+symbol+'" placeholder="target address">'+'<input id="amount_'+symbol+'" placeholder="amount to transfer">'+ '<button @click="transferErc20">Transfer</button>';
+      }
+    };
+
+
+    function uiErc20Balance(symbol:any,amount:any): void {
+      const el = document.querySelector("#show");
+      if (el) {
+        el.innerHTML += '<p class="card"  style="cursor: pointer">'+symbol+' : '+amount+'</p>' +'<input id="address_'+symbol+'" placeholder="target address">'+'<input id="amount_'+symbol+'" placeholder="amount to transfer">'+ '<button @click="transferErc20('+symbol+')">Transfer</button>';
+      }
+    };
+
+    const getAccountBalance = async (_e:EvmLink)=>{
+      var balance = await EvmWallet.getBalance(
+          _e.keypair.privateKey,
+          "https://poly-rpc.gateway.pokt.network",
+          _e.chainId
+      )
+      uiBalance(
+        "Matic ",
+        balance
+      )
+      console.log("My matic balance : "+balance)
+    }
 
     const getTokenListAmount = async (_e:EvmLink)=>{
       // console.log(_e.keypair.privateKey)
@@ -429,7 +464,7 @@ export default {
         if(Number(JSON.parse(JSON.stringify(ret[i].balance)).value)>0)
         {
             console.log(ret[i])
-            uiInform(
+            uiErc20Balance(
               ret[i].symbol,
               Number(JSON.parse(JSON.stringify(ret[i].balance)).value)
             )
@@ -471,7 +506,16 @@ export default {
         })
       }
       return results
-}
+  }
+
+    const transferErc20 = async (symbol : any)=>{
+      console.log("🔥Click");
+      var _e = await decodeUrl()
+      console.log(_e)
+      console.log(symbol);
+      // console.log(globalE)
+    }
+
 
     return {
       newLink,
@@ -495,7 +539,8 @@ export default {
       getPrivateKey,
       createLink,
       createLinkEncrypt,
-      getTokenListAmount
+      getTokenListAmount,
+      transferErc20
     };
   },
 };
