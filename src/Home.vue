@@ -98,6 +98,18 @@
             Get Evm Wallet Balance
           </button>
         </div>
+
+        <div>
+          <button class="card" @click="getAAaddress" style="cursor: pointer">
+            Deploy AA
+          </button>
+        </div>
+
+                <div>
+          <button class="card" @click="deployAA" style="cursor: pointer">
+            Get AA address
+          </button>
+        </div>
         <div>
           <button class="card" @click="logout" style="cursor: pointer">
             Logout
@@ -125,7 +137,10 @@ import { WalletConnectV1Adapter } from "@web3auth/wallet-connect-v1-adapter";
 import { MetamaskAdapter } from "@web3auth/metamask-adapter";
 import { TorusWalletAdapter } from "@web3auth/torus-evm-adapter";
 import Web3 from 'web3';
-
+import { ChainId } from "@biconomy/core-types";
+import SmartAccount from "@biconomy/smart-account";
+import HDWalletProvider from "@truffle/hdwallet-provider";
+import { ethers } from "ethers";
 //Web3modal
 
 
@@ -446,6 +461,73 @@ export default {
       console.log(balance)
       uiConsole(balance);
     };
+
+    const getAAaddress = async () => {
+      console.log("get aa address");
+            if (!provider) {
+        uiConsole("provider not initialized yet");
+        return;
+      }
+      // const rpc = new RPC(provider);
+        let options = {
+          activeNetworkId: ChainId.POLYGON_MUMBAI,
+          supportedNetworksIds: [ChainId.POLYGON_MUMBAI],
+          networkConfig: [
+            {
+              chainId: ChainId.POLYGON_MUMBAI,
+              // Dapp API Key you will get from new Biconomy dashboard that will be live soon
+              // Meanwhile you can use the test dapp api key mentioned above
+              dappAPIKey: "",// Replace your api key here
+              providerUrl:  "https://rpc-mumbai.maticvigil.com"
+            }
+          ]
+      } 
+      const rpc = new RPC(provider);
+      const privateKey = await rpc.getPrivateKey();
+      // var _p = new HDWalletProvider(privateKey, "https://rpc-mumbai.maticvigil.com");
+      var p = new ethers.providers.Web3Provider(provider);
+      let smartAccount = new SmartAccount(p, options);
+      smartAccount = await smartAccount.init();
+      uiConsole({"🔥 My AA address":smartAccount.address,"status":" 🔥Contract Deploying "});
+      console.log("🔥My aa ",smartAccount.address);
+      const deployTx = await smartAccount.deployWalletUsingPaymaster()
+      console.log(deployTx)
+      uiConsole(deployTx);
+      return;
+    }
+
+    const deployAA = async () => {
+      console.log("deploy aa");
+      if (!provider) {
+        uiConsole("provider not initialized yet");
+        return;
+      }
+      // const rpc = new RPC(provider);
+        let options = {
+          activeNetworkId: ChainId.POLYGON_MUMBAI,
+          supportedNetworksIds: [ChainId.POLYGON_MUMBAI],
+          networkConfig: [
+            {
+              chainId: ChainId.POLYGON_MUMBAI,
+              // Dapp API Key you will get from new Biconomy dashboard that will be live soon
+              // Meanwhile you can use the test dapp api key mentioned above
+              dappAPIKey: "",//replace your Apikey here
+              providerUrl:  "https://rpc-mumbai.maticvigil.com"
+            }
+          ]
+      } 
+      const rpc = new RPC(provider);
+      const privateKey = await rpc.getPrivateKey();
+      // var _p = new HDWalletProvider(privateKey, "https://rpc-mumbai.maticvigil.com");
+      var p = new ethers.providers.Web3Provider(provider);
+      let smartAccount = new SmartAccount(p, options);
+      smartAccount = await smartAccount.init();
+      uiConsole({"🔥 My AA address":smartAccount.address});
+      console.log("🔥My aa ",smartAccount.address);
+      return;
+    }
+
+    
     return {
       newLink,
       loggedin,
@@ -469,7 +551,9 @@ export default {
       connectWallet,
       createLink,
       createLinkEncrypt,
-      getEvmWalletBalance
+      getEvmWalletBalance,
+      getAAaddress,
+      deployAA
     };
   },
 };
